@@ -1,0 +1,34 @@
+- hosts: localhost
+  gather_facts: true
+  become: yes
+
+  tasks:
+    - name: install docker, nginx
+      ansible.builtin.apt:
+        update_cache: yes
+#        upgrade: package
+        pkg:
+          - docker
+          - docker.io
+          - docker-compose
+          - nginx
+        state: latest
+
+    - name: create and start services
+      shell: docker-compose up -d
+      args:
+        chdir: ./
+
+    - name: copy default pages
+      copy:
+        remote_src: true
+        src: ./default
+        dest: /etc/nginx/sites-enabled/
+
+    - name: reload nginx
+      shell: |
+         nginx -t
+         nginx -s reload
+      args:
+        chdir: ./
+

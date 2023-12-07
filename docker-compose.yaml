@@ -1,0 +1,67 @@
+version: "3.8"
+services:
+
+  grafana:
+    image: grafana/grafana:8.5.3-ubuntu
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - grafana-configs:/etc/grafana
+    networks:
+      net:
+        ipv4_address: 172.20.0.2
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: Hotrent032
+      POSTGRES_DB: mydb
+    networks:
+      net:
+        ipv4_address: 172.20.0.3
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:Hotrent032@postgresql:5432/mydb?sslmode=disable"
+    links:
+      - prometheus
+      - postgres
+    networks:
+      net:
+        ipv4_address: 172.20.0.4
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - prom-data:/prometheus
+      - prom-configs:/etc/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      net:
+        ipv4_address: 172.20.0.5
+
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+volumes:
+  grafana-data:
+  grafana-configs:
+  prom-data:
+  prom-configs:
+  postgresdata:
